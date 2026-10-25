@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../data/db_helper.dart';
 import '../models/sleep_record.dart';
@@ -8,6 +9,8 @@ import '../services/score_calculator.dart';
 import '../services/sensor_service.dart';
 
 class SleepProvider extends ChangeNotifier {
+  static const _kSessionStart = 'session_start';
+
   final _sensor = SensorService();
   final _screen = ScreenUsageService();
 
@@ -17,7 +20,19 @@ class SleepProvider extends ChangeNotifier {
   List<SleepRecord> records = [];
   int weeklyScore = 0;
 
+  /// Dipanggil saat aplikasi dibuka: memulihkan sesi yang belum selesai
+  /// (jika ada) dan memuat riwayat 7 hari terakhir.
   Future<void> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getInt(_kSessionStart);
+    if (saved != null && sleepStart == null) {
+      sleepStart = DateTime.fromMillisecondsSinceEpoch(saved);
+      // Catatan: gerakan yang terekam sebelum aplikasi tertutup tidak
+      // tersimpan, penghitungan gerakan dimulai lagi dari nol.
+      _sensor.start();
+      _keepAwake(true);
+    }
+
     records = await DbHelper.instance.lastDays(7);
     weeklyScore = ScoreCalculator.weekly(records.map((e) => e.score).toList());
     notifyListeners();
@@ -31,8 +46,13 @@ class SleepProvider extends ChangeNotifier {
     }
   }
 
-  void startSleep() {
+  Future<void> startSleep() async {
+    if (sleepStart != null) return; // sudah ada sesi berjalan
     sleepStart = DateTime.now();
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_kSessionStart, sleepStart!.millisecondsSinceEpoch);
+
     _sensor.start();
     _keepAwake(true);
     notifyListeners();
@@ -71,7 +91,11 @@ class SleepProvider extends ChangeNotifier {
     );
 
     await DbHelper.instance.insert(rec);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_kSessionStart);
     sleepStart = null;
+
     await load();
     return rec;
   }

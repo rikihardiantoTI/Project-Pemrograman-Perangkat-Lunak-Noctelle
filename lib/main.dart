@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
+
 import 'providers/sleep_provider.dart';
 import 'screens/main_shell.dart';
+import 'widgets/noctelle_ui.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,13 +32,31 @@ class NoctelleApp extends StatelessWidget {
           seedColor: const Color(0xFF6C63FF),
           brightness: Brightness.dark,
         ),
-        scaffoldBackgroundColor: const Color(0xFF0E1330),
+        scaffoldBackgroundColor: NoctelleColors.background,
+        textTheme: ThemeData.dark().textTheme.apply(
+          bodyColor: const Color(0xFFF1F2FA),
+          displayColor: const Color(0xFFF1F2FA),
+          fontFamily: 'sans-serif',
+        ),
         cardTheme: CardThemeData(
-          color: const Color(0xFF1A2147),
+          color: NoctelleColors.surface,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
+            side: const BorderSide(color: NoctelleColors.outline),
           ),
+        ),
+        navigationBarTheme: NavigationBarThemeData(
+          backgroundColor: NoctelleColors.background,
+          indicatorColor: NoctelleColors.mint.withValues(alpha: 0.14),
+          labelTextStyle: WidgetStateProperty.resolveWith((states) {
+            final selected = states.contains(WidgetState.selected);
+            return TextStyle(
+              color: selected ? NoctelleColors.mint : NoctelleColors.muted,
+              fontSize: 11,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+            );
+          }),
         ),
       ),
       // batasi lebar agar tampil seperti HP saat dibuka di Chrome

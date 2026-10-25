@@ -136,8 +136,8 @@ class _SettingsScreenState extends State<SettingsScreen>
                   kIsWeb
                       ? 'Fitur membaca pola layar hanya tersedia di aplikasi Android.'
                       : _hasUsagePermission
-                          ? 'Izin sudah diberikan. Lelap dapat membaca kapan layar menyala dan mati untuk menghitung skor.'
-                          : 'Izin ini dibutuhkan agar Lelap tahu kapan layar menyala sebelum dan selama tidur. Lelap hanya membaca waktu layar menyala/mati, bukan isi aplikasimu.',
+                          ? 'Izin sudah diberikan. Noctelle dapat membaca kapan layar menyala dan mati untuk menghitung skor.'
+                          : 'Izin ini dibutuhkan agar Noctelle tahu kapan layar menyala sebelum dan selama tidur. Noctelle hanya membaca waktu layar menyala/mati, bukan isi aplikasimu.',
                   style: const TextStyle(color: Colors.white70),
                 ),
                 if (!kIsWeb && !_hasUsagePermission) ...[

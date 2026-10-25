@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../data/db_helper.dart';
@@ -12,6 +13,7 @@ class SleepProvider extends ChangeNotifier {
 
   DateTime? sleepStart;
   bool get isSleeping => sleepStart != null;
+
   List<SleepRecord> records = [];
   int weeklyScore = 0;
 
@@ -21,41 +23,87 @@ class SleepProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> _keepAwake(bool enable) async {
+    try {
+      enable ? await WakelockPlus.enable() : await WakelockPlus.disable();
+    } catch (_) {
+      // wakelock tidak didukung di semua platform, abaikan saja
+    }
+  }
+
   void startSleep() {
     sleepStart = DateTime.now();
     _sensor.start();
-    WakelockPlus.enable();
+    _keepAwake(true);
     notifyListeners();
   }
 
   Future<SleepRecord?> wakeUp() async {
     if (sleepStart == null) return null;
+
+    final start = sleepStart!;
     final end = DateTime.now();
     _sensor.stop();
-    WakelockPlus.disable();
+    await _keepAwake(false);
 
-    int pre = 0, wakes = 0;
+    int pre = 0;
+    int wakes = 0;
     if (await _screen.hasPermission()) {
-      pre = await _screen.minutesScreenBeforeBed(sleepStart!);
-      wakes = await _screen.wakeCount(sleepStart!, end);
+      pre = await _screen.minutesScreenBeforeBed(start);
+      wakes = await _screen.wakeCount(start, end);
     }
 
+    final movement = _sensor.movementCount;
     final score = ScoreCalculator.calculate(
-      duration: end.difference(sleepStart!),
-      movementCount: _sensor.movementCount,
+      duration: end.difference(start),
+      movementCount: movement,
       screenWakeCount: wakes,
       minutesScreenBeforeBed: pre,
     );
 
     final rec = SleepRecord(
-      sleepStart: sleepStart!, sleepEnd: end,
-      movementCount: _sensor.movementCount,
+      sleepStart: start,
+      sleepEnd: end,
+      movementCount: movement,
       screenWakeCount: wakes,
-      minutesScreenBeforeBed: pre, score: score,
+      minutesScreenBeforeBed: pre,
+      score: score,
     );
+
     await DbHelper.instance.insert(rec);
     sleepStart = null;
     await load();
     return rec;
+  }
+
+  /// Data contoh untuk menguji tampilan (dipanggil dari tombol debug di Home)
+  Future<void> seedDemo() async {
+    final rnd = Random();
+    for (int i = 0; i < 7; i++) {
+      final start = DateTime.now()
+          .subtract(Duration(days: i, hours: 10, minutes: rnd.nextInt(30)));
+      final minutes = 300 + rnd.nextInt(240); // 5 sampai 9 jam
+      final end = start.add(Duration(minutes: minutes));
+      final move = rnd.nextInt(40);
+      final wakes = rnd.nextInt(4);
+      final pre = rnd.nextInt(40);
+
+      final score = ScoreCalculator.calculate(
+        duration: end.difference(start),
+        movementCount: move,
+        screenWakeCount: wakes,
+        minutesScreenBeforeBed: pre,
+      );
+
+      await DbHelper.instance.insert(SleepRecord(
+        sleepStart: start,
+        sleepEnd: end,
+        movementCount: move,
+        screenWakeCount: wakes,
+        minutesScreenBeforeBed: pre,
+        score: score,
+      ));
+    }
+    await load();
   }
 }

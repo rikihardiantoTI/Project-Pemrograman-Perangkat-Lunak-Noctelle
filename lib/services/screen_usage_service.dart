@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 
 class ScreenEvent {
@@ -9,12 +10,18 @@ class ScreenEvent {
 class ScreenUsageService {
   static const _ch = MethodChannel('lelap/screen');
 
-  Future<bool> hasPermission() async =>
-      await _ch.invokeMethod<bool>('hasPermission') ?? false;
+  Future<bool> hasPermission() async {
+    if (kIsWeb) return false; // kode Kotlin tidak ada di web
+    return await _ch.invokeMethod<bool>('hasPermission') ?? false;
+  }
 
-  Future<void> openSettings() => _ch.invokeMethod('openSettings');
+  Future<void> openSettings() async {
+    if (kIsWeb) return;
+    await _ch.invokeMethod('openSettings');
+  }
 
   Future<List<ScreenEvent>> events(DateTime start, DateTime end) async {
+    if (kIsWeb) return [];
     final raw = await _ch.invokeMethod<List<dynamic>>('getScreenEvents', {
       'start': start.millisecondsSinceEpoch,
       'end': end.millisecondsSinceEpoch,
@@ -25,17 +32,19 @@ class ScreenUsageService {
     }).toList();
   }
 
-  /// Hitung menit layar menyala dalam 30 menit sebelum waktu tidur
+  /// Menit layar menyala dalam 30 menit sebelum waktu tidur
   Future<int> minutesScreenBeforeBed(DateTime bedtime) async {
     final start = bedtime.subtract(const Duration(minutes: 30));
     final ev = await events(start.subtract(const Duration(hours: 1)), bedtime);
+
     int ms = 0;
     DateTime? onAt;
     for (final e in ev) {
       if (e.on) {
         onAt = e.time.isBefore(start) ? start : e.time;
       } else if (onAt != null) {
-        ms += e.time.difference(onAt).inMilliseconds;
+        final off = e.time.isBefore(start) ? start : e.time;
+        if (off.isAfter(onAt)) ms += off.difference(onAt).inMilliseconds;
         onAt = null;
       }
     }
@@ -43,7 +52,7 @@ class ScreenUsageService {
     return (ms / 60000).round();
   }
 
-  /// Berapa kali layar menyala di antara tidur dan bangun
+  /// Berapa kali layar menyala di antara waktu tidur dan bangun
   Future<int> wakeCount(DateTime sleep, DateTime wake) async {
     final ev = await events(sleep, wake);
     return ev.where((e) => e.on).length;

@@ -3,7 +3,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/sleep_provider.dart';
-import 'screens/main_shell.dart';
+import 'screens/splash_screen.dart';
 import 'widgets/noctelle_ui.dart';
 
 Future<void> main() async {
@@ -47,8 +47,12 @@ class NoctelleApp extends StatelessWidget {
           ),
         ),
         navigationBarTheme: NavigationBarThemeData(
-          backgroundColor: NoctelleColors.background,
+          backgroundColor: Colors.transparent,
           indicatorColor: NoctelleColors.mint.withValues(alpha: 0.14),
+          indicatorShape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 0,
           labelTextStyle: WidgetStateProperty.resolveWith((states) {
             final selected = states.contains(WidgetState.selected);
             return TextStyle(
@@ -66,7 +70,7 @@ class NoctelleApp extends StatelessWidget {
           child: child,
         ),
       ),
-      home: const MainShell(),
+      home: const SplashScreen(),
     );
   }
 }

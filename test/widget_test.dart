@@ -22,6 +22,10 @@ Future<void> main() async {
         child: const NoctelleApp(),
       ),
     );
+    expect(
+      find.text('Temukan ritme istirahat yang lebih baik.'),
+      findsOneWidget,
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Ringkasan tidurmu'), findsOneWidget);

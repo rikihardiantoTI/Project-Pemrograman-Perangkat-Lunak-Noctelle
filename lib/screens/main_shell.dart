@@ -47,33 +47,49 @@ class _MainShellState extends State<MainShell> {
           ),
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        height: 72,
-        elevation: 0,
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.nightlight_outlined),
-            selectedIcon: Icon(Icons.nightlight_round),
-            label: 'Beranda',
+      bottomNavigationBar: DecoratedBox(
+        decoration: BoxDecoration(
+          color: NoctelleColors.background.withValues(alpha: 0.96),
+          border: const Border(
+            top: BorderSide(color: NoctelleColors.outline),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.history_outlined),
-            selectedIcon: Icon(Icons.history),
-            label: 'Riwayat',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.insights_outlined),
-            selectedIcon: Icon(Icons.insights),
-            label: 'Mingguan',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.tune_outlined),
-            selectedIcon: Icon(Icons.tune),
-            label: 'Pengaturan',
-          ),
-        ],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.16),
+              blurRadius: 20,
+              offset: const Offset(0, -6),
+            ),
+          ],
+        ),
+        child: NavigationBar(
+          height: 76,
+          animationDuration: const Duration(milliseconds: 450),
+          elevation: 0,
+          selectedIndex: _index,
+          onDestinationSelected: (i) => setState(() => _index = i),
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.nightlight_outlined),
+              selectedIcon: Icon(Icons.nightlight_round),
+              label: 'Beranda',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.history_outlined),
+              selectedIcon: Icon(Icons.history),
+              label: 'Riwayat',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.insights_outlined),
+              selectedIcon: Icon(Icons.insights),
+              label: 'Mingguan',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.tune_outlined),
+              selectedIcon: Icon(Icons.tune),
+              label: 'Pengaturan',
+            ),
+          ],
+        ),
       ),
     );
   }

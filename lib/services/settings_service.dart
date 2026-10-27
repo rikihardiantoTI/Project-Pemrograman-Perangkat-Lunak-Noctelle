@@ -5,6 +5,7 @@ class SettingsService {
   static const _kHour = 'bedtime_hour';
   static const _kMinute = 'bedtime_minute';
   static const _kReminder = 'reminder_enabled';
+  static const _kSleepGoalMinutes = 'sleep_goal_minutes';
 
   Future<TimeOfDay> getBedtime() async {
     final p = await SharedPreferences.getInstance();
@@ -28,5 +29,18 @@ class SettingsService {
   Future<void> setReminderEnabled(bool value) async {
     final p = await SharedPreferences.getInstance();
     await p.setBool(_kReminder, value);
+  }
+
+  Future<int> getSleepGoalMinutes() async {
+    final p = await SharedPreferences.getInstance();
+    return p.getInt(_kSleepGoalMinutes) ?? 480;
+  }
+
+  Future<void> setSleepGoalMinutes(int minutes) async {
+    if (minutes < 360 || minutes > 600 || minutes % 30 != 0) {
+      throw ArgumentError.value(minutes, 'minutes', 'Must be 360-600 by 30');
+    }
+    final p = await SharedPreferences.getInstance();
+    await p.setInt(_kSleepGoalMinutes, minutes);
   }
 }

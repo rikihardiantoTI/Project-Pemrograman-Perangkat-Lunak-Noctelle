@@ -65,7 +65,8 @@ class WeeklyScreen extends StatelessWidget {
       children: [
         const NoctellePageTitle(
           title: 'Minggu ini',
-          subtitle: 'Gambaran singkat pola tidurmu.',
+          subtitle: 'Gambaran kebiasaan tidur selama tujuh hari.',
+          icon: Icons.insights_rounded,
         ),
         const SizedBox(height: 20),
         NoctellePanel(
@@ -134,12 +135,57 @@ class WeeklyScreen extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 24),
-        Text(
-          'Skor per hari',
-          style: Theme.of(context).textTheme.titleMedium
-              ?.copyWith(fontWeight: FontWeight.w600),
+        const SizedBox(height: 13),
+        NoctellePanel(
+          padding: const EdgeInsets.all(17),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: NoctelleColors.mint.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: const Icon(
+                  Icons.calendar_month_rounded,
+                  color: NoctelleColors.mint,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Konsistensi minggu ini',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${week.where((day) => day.score > 0).length} dari 7 hari punya catatan tidur',
+                      style: const TextStyle(
+                        color: NoctelleColors.muted,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '${week.where((day) => day.score > 0).length}/7',
+                style: const TextStyle(
+                  color: NoctelleColors.mint,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
         ),
+        const SizedBox(height: 24),
+        const NoctelleSectionLabel('Perjalanan skor tidur'),
         const SizedBox(height: 12),
         NoctellePanel(
           padding: const EdgeInsets.fromLTRB(12, 20, 12, 14),
@@ -184,9 +230,32 @@ class WeeklyScreen extends StatelessWidget {
             ),
           )
         else
-          Text(
-            'Durasi rata-rata dihitung dari ${records.length} sesi yang tercatat.',
-            style: const TextStyle(color: NoctelleColors.muted, fontSize: 12),
+          NoctellePanel(
+            padding: const EdgeInsets.all(16),
+            color: NoctelleColors.surface.withValues(alpha: 0.72),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.lightbulb_outline_rounded,
+                  color: NoctelleColors.lavender,
+                  size: 19,
+                ),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Text(
+                    averageDuration < 420
+                        ? 'Rata-rata durasi dari ${records.length} sesi adalah ${_durationLabel(averageDuration)}. Coba majukan waktu istirahat secara bertahap.'
+                        : 'Rata-rata durasi dari ${records.length} sesi adalah ${_durationLabel(averageDuration)}. Pertahankan jadwal yang terasa nyaman.',
+                    style: const TextStyle(
+                      color: NoctelleColors.muted,
+                      fontSize: 11,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
       ],
     );

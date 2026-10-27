@@ -6,6 +6,7 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
@@ -26,9 +27,13 @@ Future<void> main() async {
       find.text('Temukan ritme istirahat yang lebih baik.'),
       findsOneWidget,
     );
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.text('Ringkasan tidurmu'), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -500));
+    await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('Mulai sesi tidur'), findsOneWidget);
 
     await tester.tap(find.text('Riwayat'));
@@ -37,6 +42,16 @@ Future<void> main() async {
 
     await tester.tap(find.text('Mingguan'));
     await tester.pumpAndSettle();
-    expect(find.text('Skor per hari'), findsOneWidget);
+    expect(find.text('Minggu ini'), findsOneWidget);
+
+    await tester.tap(find.text('Pengaturan'));
+    await tester.pumpAndSettle();
+    expect(find.text('Target durasi tidur'), findsOneWidget);
+    await tester.tap(find.text('Target durasi tidur'));
+    await tester.pumpAndSettle();
+    expect(find.text('Simpan target'), findsOneWidget);
+    await tester.tap(find.text('Simpan target'));
+    await tester.pumpAndSettle();
+    expect(find.text('8j'), findsOneWidget);
   });
 }

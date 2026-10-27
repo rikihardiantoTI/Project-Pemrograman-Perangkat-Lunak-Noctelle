@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/sleep_provider.dart';
 import '../services/score_calculator.dart';
+import '../services/settings_service.dart';
 import '../widgets/noctelle_ui.dart';
 
 class SessionScreen extends StatefulWidget {
@@ -19,12 +20,14 @@ class _SessionScreenState extends State<SessionScreen>
     with SingleTickerProviderStateMixin {
   Timer? _timer;
   late final AnimationController _breathingController;
+  late final Future<int> _sleepGoal;
   Duration _elapsed = Duration.zero;
   bool _isWakingUp = false;
 
   @override
   void initState() {
     super.initState();
+    _sleepGoal = SettingsService().getSleepGoalMinutes();
     _breathingController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2600),
@@ -205,6 +208,17 @@ class _SessionScreenState extends State<SessionScreen>
                       ),
                     ),
                   ],
+                  const SizedBox(height: 22),
+                  FutureBuilder<int>(
+                    future: _sleepGoal,
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return const SizedBox.shrink();
+                      return _SessionGoalProgress(
+                        elapsed: _elapsed,
+                        targetMinutes: snapshot.data!,
+                      );
+                    },
+                  ),
                   const SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
@@ -280,6 +294,78 @@ class _MonitoringPill extends StatelessWidget {
               letterSpacing: 1,
               fontWeight: FontWeight.w700,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SessionGoalProgress extends StatelessWidget {
+  const _SessionGoalProgress({
+    required this.elapsed,
+    required this.targetMinutes,
+  });
+
+  final Duration elapsed;
+  final int targetMinutes;
+
+  @override
+  Widget build(BuildContext context) {
+    final elapsedMinutes = elapsed.inMinutes;
+    final progress = (elapsedMinutes / targetMinutes).clamp(0.0, 1.0);
+    final remainingMinutes = (targetMinutes - elapsedMinutes).clamp(
+      0,
+      targetMinutes,
+    );
+
+    return NoctellePanel(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.flag_rounded,
+                color: NoctelleColors.mint,
+                size: 18,
+              ),
+              const SizedBox(width: 9),
+              const Expanded(
+                child: Text(
+                  'Menuju target tidur',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                ),
+              ),
+              Text(
+                '${elapsedMinutes ~/ 60}j ${elapsedMinutes % 60}m'
+                ' / ${targetMinutes ~/ 60}j',
+                style: const TextStyle(
+                  color: NoctelleColors.lavender,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 7,
+              backgroundColor: NoctelleColors.surfaceRaised,
+              valueColor: const AlwaysStoppedAnimation(NoctelleColors.mint),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            remainingMinutes == 0
+                ? 'Target tercapai. Kamu bisa mengakhiri sesi kapan saja.'
+                : 'Sekitar ${remainingMinutes ~/ 60} jam '
+                      '${remainingMinutes % 60} menit menuju target.',
+            style: const TextStyle(color: NoctelleColors.muted, fontSize: 10),
           ),
         ],
       ),

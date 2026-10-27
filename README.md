@@ -2,6 +2,11 @@
 
 Aplikasi pencatatan dan ringkasan tidur berbasis Flutter.
 
+Fitur utama:
+- Ringkasan skor dan progres target durasi tidur yang dapat disesuaikan.
+- Catatan sesi tidur, riwayat dengan filter skor, dan grafik mingguan.
+- Pengaturan waktu tidur dan preferensi pengingat.
+
 ## Menjalankan aplikasi
 
 Ambil dependensi terlebih dahulu:

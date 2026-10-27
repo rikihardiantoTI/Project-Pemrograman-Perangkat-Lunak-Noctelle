@@ -7,8 +7,15 @@ import '../providers/sleep_provider.dart';
 import '../services/score_calculator.dart';
 import '../widgets/noctelle_ui.dart';
 
-class HistoryScreen extends StatelessWidget {
+class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
+
+  @override
+  State<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends State<HistoryScreen> {
+  bool _highScoresOnly = false;
 
   String _durationLabel(Duration duration) {
     final hours = duration.inHours;
@@ -90,21 +97,24 @@ class HistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final records = context.watch<SleepProvider>().records;
-    final averageDuration = records.isEmpty
+    final allRecords = context.watch<SleepProvider>().records;
+    final records = _highScoresOnly
+        ? allRecords.where((record) => record.score >= 75).toList()
+        : allRecords;
+    final averageDuration = allRecords.isEmpty
         ? Duration.zero
         : Duration(
             milliseconds:
-                records.fold<int>(
+                allRecords.fold<int>(
                   0,
                   (total, record) => total + record.duration.inMilliseconds,
                 ) ~/
-                records.length,
+                allRecords.length,
           );
-    final averageScore = records.isEmpty
+    final averageScore = allRecords.isEmpty
         ? 0
-        : (records.fold<int>(0, (total, record) => total + record.score) /
-                  records.length)
+        : (allRecords.fold<int>(0, (total, record) => total + record.score) /
+                  allRecords.length)
               .round();
 
     return ListView(
@@ -112,7 +122,8 @@ class HistoryScreen extends StatelessWidget {
       children: [
         const NoctellePageTitle(
           title: 'Riwayat tidur',
-          subtitle: 'Lihat pola istirahatmu dalam 7 hari terakhir.',
+          subtitle: 'Kenali kebiasaan dan perkembangan istirahatmu.',
+          icon: Icons.auto_awesome_mosaic_rounded,
         ),
         const SizedBox(height: 20),
         NoctellePanel(
@@ -152,7 +163,7 @@ class HistoryScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                '${records.length} sesi tercatat',
+                '${allRecords.length} sesi tercatat dalam 7 hari terakhir',
                 style: const TextStyle(
                   color: NoctelleColors.muted,
                   fontSize: 12,
@@ -162,21 +173,36 @@ class HistoryScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 26),
-        Text(
-          'Semua sesi',
-          style: Theme.of(context).textTheme.titleMedium
-              ?.copyWith(fontWeight: FontWeight.w600),
+        NoctelleSectionLabel('Sesi tidur', trailing: '${records.length} sesi'),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          children: [
+            ChoiceChip(
+              label: const Text('Semua'),
+              selected: !_highScoresOnly,
+              onSelected: (_) => setState(() => _highScoresOnly = false),
+            ),
+            ChoiceChip(
+              label: const Text('Skor 75+'),
+              selected: _highScoresOnly,
+              onSelected: (_) => setState(() => _highScoresOnly = true),
+            ),
+          ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 13),
         if (records.isEmpty)
           const NoctellePanel(
             child: Row(
               children: [
-                Icon(Icons.bedtime_outlined, color: NoctelleColors.lavender),
+                Icon(
+                  Icons.filter_alt_off_rounded,
+                  color: NoctelleColors.lavender,
+                ),
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Riwayat tidurmu akan muncul setelah sesi pertama selesai.',
+                    'Belum ada sesi yang cocok dengan filter ini. Coba tampilkan semua sesi atau mulai catatan tidur baru.',
                     style: TextStyle(color: NoctelleColors.muted),
                   ),
                 ),
@@ -238,6 +264,15 @@ class HistoryScreen extends StatelessWidget {
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${DateFormat('HH.mm').format(record.sleepStart)} – '
+                                  '${DateFormat('HH.mm').format(record.sleepEnd)}',
+                                  style: const TextStyle(
+                                    color: NoctelleColors.muted,
+                                    fontSize: 11,
                                   ),
                                 ),
                                 const SizedBox(height: 4),

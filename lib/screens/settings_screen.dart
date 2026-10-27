@@ -18,6 +18,7 @@ class _SettingsScreenState extends State<SettingsScreen>
   final _screen = ScreenUsageService();
 
   TimeOfDay _bedtime = const TimeOfDay(hour: 22, minute: 30);
+  int _sleepGoalMinutes = 480;
   bool _reminder = false;
   bool _hasUsagePermission = false;
   bool _isSavingReminder = false;
@@ -43,10 +44,12 @@ class _SettingsScreenState extends State<SettingsScreen>
   Future<void> _load() async {
     final time = await _settings.getBedtime();
     final reminder = await _settings.getReminderEnabled();
+    final sleepGoal = await _settings.getSleepGoalMinutes();
     if (!mounted) return;
     setState(() {
       _bedtime = time;
       _reminder = reminder;
+      _sleepGoalMinutes = sleepGoal;
     });
     await _checkPermission();
   }
@@ -67,6 +70,101 @@ class _SettingsScreenState extends State<SettingsScreen>
     await _settings.setBedtime(picked);
     if (!mounted) return;
     setState(() => _bedtime = picked);
+  }
+
+  Future<void> _pickSleepGoal() async {
+    var selectedMinutes = _sleepGoalMinutes;
+    final result = await showModalBottomSheet<int>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: NoctelleColors.surfaceRaised,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Target durasi tidur',
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 7),
+                const Text(
+                  'Pilih sasaran yang realistis untuk rutinitasmu.',
+                  style: TextStyle(color: NoctelleColors.muted, fontSize: 13),
+                ),
+                const SizedBox(height: 22),
+                Center(
+                  child: Text(
+                    '${selectedMinutes ~/ 60} jam'
+                    '${selectedMinutes % 60 == 0 ? '' : ' 30 menit'}',
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      color: NoctelleColors.mint,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Slider(
+                  value: selectedMinutes.toDouble(),
+                  min: 360,
+                  max: 600,
+                  divisions: 8,
+                  label: '${selectedMinutes ~/ 60} jam',
+                  onChanged: (value) =>
+                      setSheetState(() => selectedMinutes = value.round()),
+                ),
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '6 jam',
+                      style: TextStyle(
+                        color: NoctelleColors.muted,
+                        fontSize: 11,
+                      ),
+                    ),
+                    Text(
+                      '10 jam',
+                      style: TextStyle(
+                        color: NoctelleColors.muted,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () =>
+                        Navigator.pop(sheetContext, selectedMinutes),
+                    child: const Text('Simpan target'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (result == null) return;
+
+    try {
+      await _settings.setSleepGoalMinutes(result);
+      if (!mounted) return;
+      setState(() => _sleepGoalMinutes = result);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Target durasi tidur diperbarui.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Target tidur gagal disimpan: $error')),
+      );
+    }
   }
 
   Future<void> _setReminder(bool enabled) async {
@@ -92,7 +190,8 @@ class _SettingsScreenState extends State<SettingsScreen>
       children: [
         const NoctellePageTitle(
           title: 'Pengaturan',
-          subtitle: 'Sesuaikan kebiasaan istirahatmu.',
+          subtitle: 'Atur target, jadwal, dan akses sesuai kebiasaanmu.',
+          icon: Icons.tune_rounded,
         ),
         const SizedBox(height: 24),
         const _SettingsSectionTitle('JADWAL ISTIRAHAT'),
@@ -101,6 +200,44 @@ class _SettingsScreenState extends State<SettingsScreen>
           padding: EdgeInsets.zero,
           child: Column(
             children: [
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 5,
+                ),
+                leading: const _SettingsIcon(
+                  icon: Icons.flag_rounded,
+                  color: NoctelleColors.mint,
+                ),
+                title: const Text(
+                  'Target durasi tidur',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+                subtitle: const Text(
+                  'Sasaran untuk progres dan ringkasan tidur',
+                  style: TextStyle(color: NoctelleColors.muted, fontSize: 11),
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${_sleepGoalMinutes ~/ 60}j'
+                      '${_sleepGoalMinutes % 60 == 0 ? '' : ' 30m'}',
+                      style: const TextStyle(
+                        color: NoctelleColors.mint,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: NoctelleColors.muted,
+                    ),
+                  ],
+                ),
+                onTap: _pickSleepGoal,
+              ),
+              const Divider(height: 1, indent: 18, endIndent: 18),
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 18,
